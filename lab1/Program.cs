@@ -14,3 +14,14 @@ public static class Program
         Console.WriteLine("Hello, World!");
     }
 }
+
+public static class Hello
+{
+    /// <summary>
+    /// Prints a greeting to the console.
+    /// </summary>
+    public static void Print()
+    {
+        Console.WriteLine("Hello, World!");
+    }
+}
