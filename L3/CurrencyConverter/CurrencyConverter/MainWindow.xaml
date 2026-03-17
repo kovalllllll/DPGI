@@ -464,7 +464,7 @@
                            FontSize="11"
                            Foreground="{StaticResource BrTextMuted}"
                            VerticalAlignment="Center">
-                    WPF · .NET 8 · MVVM
+                    WPF · .NET 9 · MVVM
                 </TextBlock>
             </Grid>
         </Border>
