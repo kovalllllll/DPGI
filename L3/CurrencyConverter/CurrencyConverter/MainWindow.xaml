@@ -125,7 +125,7 @@
                             <!-- Flag -->
                             <DataGridTextColumn Header=""
                                                 Binding="{Binding Flag}"
-                                                Width="40"
+                                                Width="50"
                                                 FontSize="18" />
                             <!-- Code -->
                             <DataGridTextColumn Header="КОД"
@@ -140,7 +140,7 @@
                             <!-- Units -->
                             <DataGridTextColumn Header="ОД."
                                                 Binding="{Binding Units}"
-                                                Width="40"
+                                                Width="60"
                                                 ElementStyle="{StaticResource LabelValue}" />
                             <!-- Rate -->
                             <DataGridTemplateColumn Header="КУРС (ГРН)" Width="100">
