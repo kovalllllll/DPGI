@@ -1,0 +1,25 @@
+﻿<Window x:Class="Lab4.EditDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Товар" SizeToContent="WidthAndHeight"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize">
+    <StackPanel Margin="12" Width="260">
+        <TextBlock Margin="0,0,0,2">Назва:</TextBlock>
+        <TextBox Name="TbNazva" Margin="0,0,0,8" />
+
+        <TextBlock Margin="0,0,0,2">Одиниця виміру:</TextBlock>
+        <TextBox Name="TbOdVymiru" Margin="0,0,0,8" />
+
+        <TextBlock Margin="0,0,0,2">Кількість:</TextBlock>
+        <TextBox Name="TbKilkist" Margin="0,0,0,8" />
+
+        <TextBlock Margin="0,0,0,2">Ціна:</TextBlock>
+        <TextBox Name="TbTsina" Margin="0,0,0,12" />
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Width="70" Margin="0,0,6,0" IsDefault="True" Click="OkClick">OK</Button>
+            <Button Width="70" IsCancel="True">Скасувати</Button>
+        </StackPanel>
+    </StackPanel>
+</Window>
