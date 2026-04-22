@@ -1,9 +1,12 @@
 ﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 
 namespace CurrencyConverter.Models
 {
     public class Currency : INotifyPropertyChanged
     {
+        [Key] public int Id { get; set; }
+
         private string _code = string.Empty;
         private string _name = string.Empty;
         private string _flag = string.Empty;
@@ -40,7 +43,6 @@ namespace CurrencyConverter.Models
             }
         }
 
-        /// <summary>Курс: скільки гривень за <see cref="Units"/> одиниць валюти</summary>
         public double Rate
         {
             get => _rate;
@@ -52,7 +54,6 @@ namespace CurrencyConverter.Models
             }
         }
 
-        /// <summary>Кількість одиниць, за яку зазначено курс (напр. 100 JPY)</summary>
         public int Units
         {
             get => _units;
@@ -64,7 +65,6 @@ namespace CurrencyConverter.Models
             }
         }
 
-        /// <summary>Курс за 1 одиницю валюти</summary>
         public double RatePerUnit => Units > 0 ? Rate / Units : 0;
 
         public event PropertyChangedEventHandler? PropertyChanged;

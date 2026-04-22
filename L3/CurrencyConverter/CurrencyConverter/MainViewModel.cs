@@ -1,24 +1,30 @@
 ﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows.Input;
+using CurrencyConverter.Data;
 using CurrencyConverter.Models;
 
 namespace CurrencyConverter
 {
     public class MainViewModel : INotifyPropertyChanged
     {
-        // ── Fields ──────────────────────────────────────────────────────────────
+        private readonly CurrencyDbContext _db;
+
         private Currency? _selectedCurrency;
         private string _foreignAmountText = string.Empty;
         private string _uahAmountText = string.Empty;
-        private bool _isUpdating; // prevents feedback loops
+        private bool _isUpdating;
         private string _statusMessage = string.Empty;
         private bool _isEditing;
 
-        // ── Constructor ─────────────────────────────────────────────────────────
         public MainViewModel()
         {
+            _db = new CurrencyDbContext();
+            _db.Database.EnsureCreated(); // Автоматично створює БД і таблиці
+
             LoadCurrencies();
+            LoadHistory();
+
             SelectedCurrency = Currencies.FirstOrDefault();
 
             SwapCommand = new RelayCommand(ExecuteSwap, _ => SelectedCurrency != null);
@@ -27,36 +33,52 @@ namespace CurrencyConverter
             RemoveCurrencyCommand = new RelayCommand(ExecuteRemoveCurrency, _ => SelectedCurrency != null);
             SaveCurrencyCommand = new RelayCommand(ExecuteSaveCurrency, CanExecuteSaveCurrency);
             CancelEditCommand = new RelayCommand(ExecuteCancelEdit);
+            ClearHistoryCommand = new RelayCommand(ExecuteClearHistory);
         }
 
-        // ── Currencies catalogue ────────────────────────────────────────────────
+        // ── Collections ──────────────────────────────────────────────────────
         public ObservableCollection<Currency> Currencies { get; } = new();
+        public ObservableCollection<ConversionHistory> History { get; } = new();
 
         private void LoadCurrencies()
         {
-            // НБУ-орієнтовані курси (умовні, оновлюйте вручну або через API)
-            var data = new[]
+            var fromDb = _db.Currencies.ToList();
+
+            if (!fromDb.Any())
             {
-                new Currency { Code = "USD", Name = "Долар США", Flag = "🇺🇸", Rate = 41.20, Units = 1 },
-                new Currency { Code = "EUR", Name = "Євро", Flag = "🇪🇺", Rate = 44.80, Units = 1 },
-                new Currency { Code = "GBP", Name = "Фунт стерлінгів", Flag = "🇬🇧", Rate = 52.30, Units = 1 },
-                new Currency { Code = "CHF", Name = "Швейцарський франк", Flag = "🇨🇭", Rate = 46.10, Units = 1 },
-                new Currency { Code = "PLN", Name = "Польський злотий", Flag = "🇵🇱", Rate = 9.85, Units = 1 },
-                new Currency { Code = "CZK", Name = "Чеська крона", Flag = "🇨🇿", Rate = 1.73, Units = 1 },
-                new Currency { Code = "JPY", Name = "Японська єна", Flag = "🇯🇵", Rate = 27.40, Units = 100 },
-                new Currency { Code = "CNY", Name = "Китайський юань", Flag = "🇨🇳", Rate = 5.68, Units = 1 },
-                new Currency { Code = "CAD", Name = "Канадський долар", Flag = "🇨🇦", Rate = 29.60, Units = 1 },
-                new Currency { Code = "AUD", Name = "Австралійський долар", Flag = "🇦🇺", Rate = 26.30, Units = 1 },
-                new Currency { Code = "NOK", Name = "Норвезька крона", Flag = "🇳🇴", Rate = 3.82, Units = 1 },
-                new Currency { Code = "SEK", Name = "Шведська крона", Flag = "🇸🇪", Rate = 3.91, Units = 1 },
-                new Currency { Code = "HUF", Name = "Угорський форинт", Flag = "🇭🇺", Rate = 0.108, Units = 1 },
-                new Currency { Code = "RON", Name = "Румунський лей", Flag = "🇷🇴", Rate = 9.00, Units = 1 },
-                new Currency { Code = "TRY", Name = "Турецька ліра", Flag = "🇹🇷", Rate = 1.21, Units = 1 },
-            };
-            foreach (var c in data) Currencies.Add(c);
+                // Початковий seed при першому запуску
+                var seed = new[]
+                {
+                    new Currency { Code = "USD", Name = "Долар США", Flag = "🇺🇸", Rate = 41.20, Units = 1 },
+                    new Currency { Code = "EUR", Name = "Євро", Flag = "🇪🇺", Rate = 44.80, Units = 1 },
+                    new Currency { Code = "GBP", Name = "Фунт стерлінгів", Flag = "🇬🇧", Rate = 52.30, Units = 1 },
+                    new Currency { Code = "CHF", Name = "Швейцарський франк", Flag = "🇨🇭", Rate = 46.10, Units = 1 },
+                    new Currency { Code = "PLN", Name = "Польський злотий", Flag = "🇵🇱", Rate = 9.85, Units = 1 },
+                    new Currency { Code = "CZK", Name = "Чеська крона", Flag = "🇨🇿", Rate = 1.73, Units = 1 },
+                    new Currency { Code = "JPY", Name = "Японська єна", Flag = "🇯🇵", Rate = 27.40, Units = 100 },
+                    new Currency { Code = "CNY", Name = "Китайський юань", Flag = "🇨🇳", Rate = 5.68, Units = 1 },
+                    new Currency { Code = "CAD", Name = "Канадський долар", Flag = "🇨🇦", Rate = 29.60, Units = 1 },
+                    new Currency
+                        { Code = "AUD", Name = "Австралійський долар", Flag = "🇦🇺", Rate = 26.30, Units = 1 },
+                };
+                _db.Currencies.AddRange(seed);
+                _db.SaveChanges();
+                fromDb = _db.Currencies.ToList();
+            }
+
+            foreach (var c in fromDb) Currencies.Add(c);
         }
 
-        // ── Selected currency ───────────────────────────────────────────────────
+        private void LoadHistory()
+        {
+            var records = _db.History
+                .OrderByDescending(h => h.Timestamp)
+                .Take(100)
+                .ToList();
+            foreach (var h in records) History.Add(h);
+        }
+
+        // ── Selected currency ────────────────────────────────────────────────
         public Currency? SelectedCurrency
         {
             get => _selectedCurrency;
@@ -65,7 +87,6 @@ namespace CurrencyConverter
                 _selectedCurrency = value;
                 OnPropertyChanged(nameof(SelectedCurrency));
                 RecalcFromForeign();
-                // Populate edit fields
                 if (value != null && !IsEditing)
                 {
                     EditCode = value.Code;
@@ -77,7 +98,7 @@ namespace CurrencyConverter
             }
         }
 
-        // ── Conversion inputs ───────────────────────────────────────────────────
+        // ── Conversion inputs ────────────────────────────────────────────────
         public string ForeignAmountText
         {
             get => _foreignAmountText;
@@ -110,7 +131,7 @@ namespace CurrencyConverter
             }
         }
 
-        // ── Edit-form fields ────────────────────────────────────────────────────
+        // ── Edit fields ──────────────────────────────────────────────────────
         public bool IsEditing
         {
             get => _isEditing;
@@ -180,13 +201,14 @@ namespace CurrencyConverter
             }
         }
 
-        // ── Commands ────────────────────────────────────────────────────────────
+        // ── Commands ─────────────────────────────────────────────────────────
         public ICommand SwapCommand { get; }
         public ICommand ClearCommand { get; }
         public ICommand AddCurrencyCommand { get; }
         public ICommand RemoveCurrencyCommand { get; }
         public ICommand SaveCurrencyCommand { get; }
         public ICommand CancelEditCommand { get; }
+        public ICommand ClearHistoryCommand { get; }
 
         private void ExecuteSwap(object? _)
         {
@@ -224,6 +246,8 @@ namespace CurrencyConverter
         {
             if (SelectedCurrency == null) return;
             var name = SelectedCurrency.Name;
+            _db.Currencies.Remove(SelectedCurrency);
+            _db.SaveChanges();
             Currencies.Remove(SelectedCurrency);
             SelectedCurrency = Currencies.FirstOrDefault();
             StatusMessage = $"Валюту «{name}» видалено.";
@@ -242,7 +266,6 @@ namespace CurrencyConverter
 
             if (!int.TryParse(EditUnits, out int units) || units <= 0) units = 1;
 
-            // Edit existing vs add new
             if (SelectedCurrency != null &&
                 string.Equals(SelectedCurrency.Code, EditCode, StringComparison.OrdinalIgnoreCase))
             {
@@ -250,6 +273,8 @@ namespace CurrencyConverter
                 SelectedCurrency.Flag = EditFlag;
                 SelectedCurrency.Rate = rate;
                 SelectedCurrency.Units = units;
+                _db.Currencies.Update(SelectedCurrency); // ← EF Update
+                _db.SaveChanges();
                 StatusMessage = $"Курс {EditCode} оновлено → {rate} грн / {units} од.";
             }
             else
@@ -260,9 +285,7 @@ namespace CurrencyConverter
                     return;
                 }
 
-                var existing = Currencies.FirstOrDefault(c =>
-                    string.Equals(c.Code, EditCode, StringComparison.OrdinalIgnoreCase));
-                if (existing != null)
+                if (Currencies.Any(c => string.Equals(c.Code, EditCode, StringComparison.OrdinalIgnoreCase)))
                 {
                     StatusMessage = $"⚠ Валюта {EditCode} вже існує.";
                     return;
@@ -270,15 +293,14 @@ namespace CurrencyConverter
 
                 var newCur = new Currency
                 {
-                    Code = EditCode.ToUpper(),
-                    Name = EditName,
-                    Flag = EditFlag,
-                    Rate = rate,
-                    Units = units,
+                    Code = EditCode.ToUpper(), Name = EditName,
+                    Flag = EditFlag, Rate = rate, Units = units
                 };
+                _db.Currencies.Add(newCur); // ← EF Insert
+                _db.SaveChanges();
                 Currencies.Add(newCur);
                 SelectedCurrency = newCur;
-                StatusMessage = $"Валюту {newCur.Code} додано.";
+                StatusMessage = $"Валюту {newCur.Code} додано та збережено в БД.";
             }
 
             IsEditing = false;
@@ -302,7 +324,15 @@ namespace CurrencyConverter
             StatusMessage = "Редагування скасовано.";
         }
 
-        // ── Conversion logic ────────────────────────────────────────────────────
+        private void ExecuteClearHistory(object? _)
+        {
+            _db.History.RemoveRange(_db.History);
+            _db.SaveChanges();
+            History.Clear();
+            StatusMessage = "Журнал конвертацій очищено.";
+        }
+
+        // ── Conversion logic ─────────────────────────────────────────────────
         private void RecalcFromForeign()
         {
             if (_isUpdating || SelectedCurrency == null) return;
@@ -316,8 +346,24 @@ namespace CurrencyConverter
                 {
                     double uah = foreign * SelectedCurrency.RatePerUnit;
                     UahAmountText = uah.ToString("F2");
-                    StatusMessage = $"{foreign:F2} {SelectedCurrency.Code} = {uah:F2} грн  " +
+                    StatusMessage = $"{foreign:F2} {SelectedCurrency.Code} = {uah:F2} грн " +
                                     $"(курс: {SelectedCurrency.Rate} грн / {SelectedCurrency.Units} {SelectedCurrency.Code})";
+
+                    // ── Зберегти в журнал БД ──
+                    if (foreign > 0)
+                    {
+                        var entry = new ConversionHistory
+                        {
+                            CurrencyCode = SelectedCurrency.Code,
+                            ForeignAmount = foreign,
+                            UahAmount = uah,
+                            RateUsed = SelectedCurrency.RatePerUnit,
+                            Timestamp = DateTime.Now
+                        };
+                        _db.History.Add(entry);
+                        _db.SaveChanges();
+                        History.Insert(0, entry); // додаємо зверху списку
+                    }
                 }
                 else
                 {
@@ -344,7 +390,7 @@ namespace CurrencyConverter
                 {
                     double foreign = uah / SelectedCurrency.RatePerUnit;
                     ForeignAmountText = foreign.ToString("F4");
-                    StatusMessage = $"{uah:F2} грн = {foreign:F4} {SelectedCurrency.Code}  " +
+                    StatusMessage = $"{uah:F2} грн = {foreign:F4} {SelectedCurrency.Code} " +
                                     $"(курс: {SelectedCurrency.Rate} грн / {SelectedCurrency.Units} {SelectedCurrency.Code})";
                 }
                 else
@@ -359,7 +405,6 @@ namespace CurrencyConverter
             }
         }
 
-        // ── INotifyPropertyChanged ───────────────────────────────────────────────
         public event PropertyChangedEventHandler? PropertyChanged;
 
         protected void OnPropertyChanged(string name) =>

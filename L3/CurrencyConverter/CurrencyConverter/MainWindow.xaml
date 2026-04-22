@@ -4,7 +4,7 @@
         xmlns:currencyConverter="clr-namespace:CurrencyConverter"
         Title="Конвертер валют · UAH"
         MinWidth="880" MinHeight="580"
-        Width="1100" Height="700"
+        Width="1100" Height="750"
         WindowStartupLocation="CenterScreen"
         Background="{StaticResource BrBgDeep}">
 
@@ -12,17 +12,14 @@
         <currencyConverter:MainViewModel />
     </Window.DataContext>
 
-    <!-- ╔══════════════════════════════════════════════════════════════╗
-         ║  ROOT GRID  (header / body / status)                        ║
-         ╚══════════════════════════════════════════════════════════════╝ -->
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="64" />        <!-- header    -->
-            <RowDefinition Height="*" />         <!-- content   -->
-            <RowDefinition Height="Auto" />      <!-- status    -->
+            <RowDefinition Height="64" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- ════════════════════════════════ HEADER ════════════════════════════ -->
+        <!-- ════════ HEADER ════════ -->
         <Border Grid.Row="0"
                 Background="{StaticResource BrBgCard}"
                 BorderBrush="{StaticResource BrBorder}"
@@ -34,7 +31,6 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <!-- Logo + title -->
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="₴" FontSize="28" FontWeight="Bold"
                                Foreground="{StaticResource BrAccent}"
@@ -43,13 +39,12 @@
                         <TextBlock Text="КОНВЕРТЕР ВАЛЮТ"
                                    FontSize="15" FontWeight="Bold"
                                    Foreground="{StaticResource BrTextPrimary}" />
-                        <TextBlock Text="Довідник курсів НБУ"
+                        <TextBlock Text="Довідник курсів НБУ · SQLite DB"
                                    FontSize="11"
                                    Foreground="{StaticResource BrTextSecond}" />
                     </StackPanel>
                 </StackPanel>
 
-                <!-- Subtitle chip -->
                 <Border Grid.Column="2" VerticalAlignment="Center"
                         Background="#1F3A2C" CornerRadius="20" Padding="12,5">
                     <TextBlock FontSize="12" Foreground="{StaticResource BrAccent}" FontWeight="SemiBold">
@@ -60,13 +55,11 @@
             </Grid>
         </Border>
 
-        <!-- ════════════════════════════════ BODY ══════════════════════════════ -->
-        <Grid Grid.Row="1" Margin="0">
+        <!-- ════════ BODY ════════ -->
+        <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <!-- Left: catalogue -->
                 <ColumnDefinition Width="2*" MinWidth="320" />
                 <ColumnDefinition Width="Auto" />
-                <!-- Right: converter + edit -->
                 <ColumnDefinition Width="3*" MinWidth="340" />
             </Grid.ColumnDefinitions>
 
@@ -82,7 +75,6 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <!-- Catalogue header -->
                     <Border Grid.Row="0" Padding="16,12"
                             BorderBrush="{StaticResource BrBorder}"
                             BorderThickness="0,0,0,1">
@@ -116,41 +108,31 @@
                         </Grid>
                     </Border>
 
-                    <!-- DataGrid -->
                     <DataGrid Grid.Row="1"
                               ItemsSource="{Binding Currencies}"
-                              SelectedItem="{Binding SelectedCurrency}"
-                              Margin="0">
+                              SelectedItem="{Binding SelectedCurrency}">
                         <DataGrid.Columns>
-                            <!-- Flag -->
                             <DataGridTextColumn Header=""
                                                 Binding="{Binding Flag}"
-                                                Width="50"
-                                                FontSize="18" />
-                            <!-- Code -->
+                                                Width="50" FontSize="18" />
                             <DataGridTextColumn Header="КОД"
                                                 Binding="{Binding Code}"
-                                                Width="58"
-                                                FontWeight="Bold"
+                                                Width="58" FontWeight="Bold"
                                                 FontFamily="Cascadia Code, Consolas" />
-                            <!-- Name -->
                             <DataGridTextColumn Header="НАЗВА"
                                                 Binding="{Binding Name}"
                                                 Width="*" />
-                            <!-- Units -->
                             <DataGridTextColumn Header="ОД."
                                                 Binding="{Binding Units}"
                                                 Width="60"
                                                 ElementStyle="{StaticResource LabelValue}" />
-                            <!-- Rate -->
                             <DataGridTemplateColumn Header="КУРС (ГРН)" Width="100">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <TextBlock VerticalAlignment="Center"
                                                    Foreground="{StaticResource BrAccent}"
                                                    FontFamily="Cascadia Code, Consolas"
-                                                   FontWeight="SemiBold"
-                                                   FontSize="13">
+                                                   FontWeight="SemiBold" FontSize="13">
                                             <Run Text="{Binding Rate, StringFormat='N2', Mode=OneWay}" />
                                         </TextBlock>
                                     </DataTemplate>
@@ -159,13 +141,12 @@
                         </DataGrid.Columns>
                     </DataGrid>
 
-                    <!-- Footer note -->
                     <Border Grid.Row="2" Padding="14,8"
                             BorderBrush="{StaticResource BrBorder}"
                             BorderThickness="0,1,0,0">
                         <TextBlock FontSize="11" Foreground="{StaticResource BrTextMuted}"
                                    TextWrapping="Wrap">
-                            ⓘ Курси орієнтовані на офіційні дані НБУ. Оберіть валюту для конвертації.
+                            ⓘ Курси орієнтовані на офіційні дані НБУ. Дані зберігаються в SQLite.
                         </TextBlock>
                     </Border>
                 </Grid>
@@ -182,21 +163,21 @@
             <!-- ── RIGHT PANEL ── -->
             <Grid Grid.Column="2">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />      <!-- конвертер + редагування -->
+                    <RowDefinition Height="Auto" />   <!-- заголовок журналу -->
+                    <RowDefinition Height="200" />    <!-- DataGrid журналу -->
+                    <RowDefinition Height="Auto" />   <!-- кнопка очистити -->
                 </Grid.RowDefinitions>
 
+                <!-- Конвертер + редагування -->
                 <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
                     <StackPanel Margin="24,20,24,0" MaxWidth="520">
 
-                        <!-- ─── CONVERTER CARD ─────────────────── -->
+                        <!-- ─── CONVERTER CARD ─── -->
                         <Border Background="{StaticResource BrBgCard}"
                                 BorderBrush="{StaticResource BrBorder}"
-                                BorderThickness="1"
-                                CornerRadius="10"
-                                Padding="20">
+                                BorderThickness="1" CornerRadius="10" Padding="20">
                             <StackPanel>
-                                <!-- Card title -->
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
                                     <TextBlock Text="⇄" FontSize="18"
                                                Foreground="{StaticResource BrAccent}"
@@ -231,10 +212,9 @@
                                                 <Run Text="1 " />
                                                 <Run Text="{Binding SelectedCurrency.Code, Mode=OneWay}" />
                                                 <Run Text=" = " />
-                                                <Run
-                                                    Text="{Binding SelectedCurrency.RatePerUnit, StringFormat='N4', Mode=OneWay}"
-                                                    Foreground="{StaticResource BrAccent}"
-                                                    FontFamily="Cascadia Code, Consolas" />
+                                                <Run Text="{Binding SelectedCurrency.RatePerUnit, StringFormat='N4', Mode=OneWay}"
+                                                     Foreground="{StaticResource BrAccent}"
+                                                     FontFamily="Cascadia Code, Consolas" />
                                                 <Run Text=" грн" />
                                             </TextBlock>
                                         </StackPanel>
@@ -244,8 +224,7 @@
                                             <TextBlock FontSize="11" FontWeight="Bold"
                                                        Foreground="{StaticResource BrAccent}"
                                                        FontFamily="Cascadia Code, Consolas">
-                                                <Run
-                                                    Text="{Binding SelectedCurrency.Rate, StringFormat='N2', Mode=OneWay}" />
+                                                <Run Text="{Binding SelectedCurrency.Rate, StringFormat='N2', Mode=OneWay}" />
                                                 <Run Text=" / " />
                                                 <Run Text="{Binding SelectedCurrency.Units, Mode=OneWay}" />
                                             </TextBlock>
@@ -253,7 +232,7 @@
                                     </Grid>
                                 </Border>
 
-                                <!-- FROM: foreign currency -->
+                                <!-- FROM -->
                                 <TextBlock Style="{StaticResource LabelCaption}">
                                     <Run Text="{Binding SelectedCurrency.Code, Mode=OneWay}" />
                                     <Run Text=" — Сума у валюті" />
@@ -281,7 +260,7 @@
                                     </Border>
                                 </Grid>
 
-                                <!-- Swap button -->
+                                <!-- Swap -->
                                 <Button Style="{StaticResource BtnGhost}"
                                         Command="{Binding SwapCommand}"
                                         HorizontalAlignment="Center"
@@ -319,7 +298,6 @@
                                     </Border>
                                 </Grid>
 
-                                <!-- Actions -->
                                 <Button Style="{StaticResource BtnGhost}"
                                         Content="🗑  Очистити"
                                         Command="{Binding ClearCommand}"
@@ -328,13 +306,11 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- ─── EDIT CARD ──────────────────────── -->
+                        <!-- ─── EDIT CARD ─── -->
                         <Border Margin="0,16,0,0"
                                 Background="{StaticResource BrBgCard}"
                                 BorderBrush="{StaticResource BrBorder}"
-                                BorderThickness="1"
-                                CornerRadius="10"
-                                Padding="20">
+                                BorderThickness="1" CornerRadius="10" Padding="20">
                             <StackPanel>
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
                                     <TextBlock Text="✎" FontSize="16"
@@ -350,14 +326,12 @@
 
                                 <Separator Style="{StaticResource HRule}" />
 
-                                <!-- Row 1: flag + code + name -->
                                 <Grid Margin="0,8,0,0">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="60" />
                                         <ColumnDefinition Width="80" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
-
                                     <StackPanel Grid.Column="0" Margin="0,0,8,0">
                                         <TextBlock Style="{StaticResource LabelCaption}" Text="ПРАПОР" />
                                         <TextBox Text="{Binding EditFlag, UpdateSourceTrigger=PropertyChanged}"
@@ -376,7 +350,6 @@
                                     </StackPanel>
                                 </Grid>
 
-                                <!-- Row 2: rate + units -->
                                 <Grid Margin="0,12,0,0">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
@@ -386,21 +359,18 @@
                                         <TextBlock Style="{StaticResource LabelCaption}" Text="КУРС (ГРН)" />
                                         <TextBox Text="{Binding EditRate, UpdateSourceTrigger=PropertyChanged}"
                                                  FontFamily="Cascadia Code, Consolas"
-                                                 FontSize="15" FontWeight="SemiBold"
-                                                 Padding="10,10" />
+                                                 FontSize="15" FontWeight="SemiBold" Padding="10,10" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="1">
                                         <TextBlock Style="{StaticResource LabelCaption}" Text="ОДИНИЦЬ" />
                                         <TextBox Text="{Binding EditUnits, UpdateSourceTrigger=PropertyChanged}"
                                                  FontFamily="Cascadia Code, Consolas"
-                                                 FontSize="15" TextAlignment="Center"
-                                                 Padding="6,10" />
+                                                 FontSize="15" TextAlignment="Center" Padding="6,10" />
                                     </StackPanel>
                                 </Grid>
 
                                 <Separator Style="{StaticResource HRule}" Margin="0,14,0,0" />
 
-                                <!-- Buttons -->
                                 <Grid Margin="0,4,0,0">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
@@ -437,13 +407,74 @@
                             </StackPanel>
                         </Border>
 
-                        <Rectangle Height="24" />
+                        <Rectangle Height="16" />
                     </StackPanel>
                 </ScrollViewer>
+
+                <!-- ─── JOURNAL HEADER ─── -->
+                <Border Grid.Row="1"
+                        Padding="24,10,24,8"
+                        Background="{StaticResource BrBgCard}"
+                        BorderBrush="{StaticResource BrBorder}"
+                        BorderThickness="0,1,0,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0"
+                                   Text="📋  ЖУРНАЛ КОНВЕРТАЦІЙ"
+                                   FontSize="11" FontWeight="Bold"
+                                   Foreground="{StaticResource BrTextSecond}"
+                                   VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="1"
+                                   FontSize="11" Foreground="{StaticResource BrTextMuted}"
+                                   VerticalAlignment="Center">
+                            <Run Text="{Binding History.Count, Mode=OneWay}" />
+                            <Run Text=" записів" />
+                        </TextBlock>
+                    </Grid>
+                </Border>
+
+                <!-- ─── JOURNAL DATAGRID ─── -->
+                <DataGrid Grid.Row="2"
+                          ItemsSource="{Binding History}"
+                          Background="{StaticResource BrBgDeep}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="ЧАС"
+                                            Binding="{Binding DisplayTime}"
+                                            Width="150" />
+                        <DataGridTextColumn Header="ВАЛЮТА"
+                                            Binding="{Binding CurrencyCode}"
+                                            Width="70" />
+                        <DataGridTextColumn Header="СУМА (вал)"
+                                            Binding="{Binding ForeignAmount, StringFormat={}{0:F2}}"
+                                            Width="110" />
+                        <DataGridTextColumn Header="СУМА (грн)"
+                                            Binding="{Binding UahAmount, StringFormat={}{0:F2}}"
+                                            Width="110" />
+                        <DataGridTextColumn Header="КУРС"
+                                            Binding="{Binding RateUsed, StringFormat={}{0:F4}}"
+                                            Width="*" />
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <!-- ─── CLEAR JOURNAL BUTTON ─── -->
+                <Border Grid.Row="3"
+                        Padding="24,8"
+                        Background="{StaticResource BrBgCard}"
+                        BorderBrush="{StaticResource BrBorder}"
+                        BorderThickness="0,1,0,0">
+                    <Button Content="🗑  Очистити журнал"
+                            Style="{StaticResource BtnDanger}"
+                            Command="{Binding ClearHistoryCommand}"
+                            HorizontalAlignment="Left"
+                            FontSize="12" Padding="12,7" />
+                </Border>
             </Grid>
         </Grid>
 
-        <!-- ════════════════════════════════ STATUS BAR ═════════════════════════ -->
+        <!-- ════════ STATUS BAR ════════ -->
         <Border Grid.Row="2"
                 Background="{StaticResource BrBgCard}"
                 BorderBrush="{StaticResource BrBorder}"
@@ -464,10 +495,9 @@
                            FontSize="11"
                            Foreground="{StaticResource BrTextMuted}"
                            VerticalAlignment="Center">
-                    WPF · .NET 9 · MVVM
+                    WPF · .NET 8 · MVVM · SQLite
                 </TextBlock>
             </Grid>
         </Border>
     </Grid>
-
 </Window>
